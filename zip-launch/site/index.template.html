@@ -1,0 +1,558 @@
+<title>Zip Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600;800&display=swap">
+<style>
+/* Layout: a riso-printed zine on cream stock. One column of "printed sheets", each sheet a section, a live zipper closes as you scroll. Single deliberate paper look (not theme-switched). */
+:root {
+  --paper: #F4EDE0; --paper-2: #EBE2D1; --ink: #1B1A2B; --blue: #2748E8; --pink: #FF4FB0; --yellow: #FFD84D;
+  --violet: #27169F; --night: #15142A; --cream: #FFF8EC; --metal: #D9D6CF; --green: #00A95C; --muted: #5B5770;
+  --display: "Anybody", "Arial Narrow", Impact, sans-serif;
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --gut: clamp(16px, 4vw, 56px);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.55 var(--mono);
+  background-image: var(--tooth);
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-inline: var(--gut); }
+h1, h2, h3 { font-family: var(--display); font-weight: 900; line-height: .95; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+.mis { text-shadow: .06em .05em 0 var(--pink); }
+.mis-blue { text-shadow: .05em .04em 0 var(--blue); }
+.acc { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: 0; }
+.eyebrow { font: 800 13px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; background: var(--pink); color: var(--cream); font: 800 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- zipper progress bar ---------- */
+.zipbar { position: fixed; inset: 0 0 auto 0; z-index: 50; height: 18px; pointer-events: none; padding-top: env(safe-area-inset-top, 0px); }
+.zipbar .teeth { position: absolute; inset: 4px 0 auto 0; height: 10px; background: repeating-linear-gradient(90deg, var(--metal) 0 7px, var(--ink) 7px 8px, transparent 8px 12px), var(--violet); border-block: 2px solid var(--ink); }
+.zipbar .open { position: absolute; top: 0; right: 0; height: 18px; background: var(--paper); transition: width .08s linear; }
+.zipbar .slider { position: absolute; top: 0; width: 26px; height: 16px; margin-left: -13px; background: var(--metal); border: 2.5px solid var(--ink); border-radius: 5px; }
+.zipbar .slider::after { content: ""; position: absolute; left: 6px; top: 12px; width: 9px; height: 18px; background: var(--metal); border: 2.5px solid var(--ink); border-radius: 4px; transform: rotate(-10deg); transform-origin: top; }
+
+/* ---------- nav ---------- */
+nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); border-bottom: 2px solid var(--ink); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px 12px; }
+.logo { display: inline-flex; align-items: baseline; gap: 4px; text-decoration: none; font-family: var(--display); font-weight: 900; font-stretch: 60%; font-size: 34px; line-height: 1; position: relative; }
+.logo .z { color: var(--blue); text-shadow: 3px 3px 0 var(--ink); position: relative; }
+.logo .z::after { content: ""; position: absolute; left: -2px; right: -2px; top: 46%; height: 5px; background: repeating-linear-gradient(90deg, var(--metal) 0 3px, var(--ink) 3px 4px); }
+.logo .a { font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--pink); font-size: 36px; }
+nav ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; font: 700 14px/1 var(--mono); }
+nav ul a { text-decoration: none; }
+nav ul a:hover { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--pink); }
+.btn { display: inline-flex; align-items: center; gap: 10px; font: 800 15px/1 var(--mono); text-decoration: none; border: 3px solid var(--ink); border-radius: 99px; padding: 13px 20px; background: var(--blue); color: var(--cream); box-shadow: 4px 5px 0 var(--ink); cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.btn:hover { transform: translate(-1px, -2px); box-shadow: 5px 7px 0 var(--ink); }
+.btn:active { transform: translate(3px, 4px); box-shadow: 1px 1px 0 var(--ink); }
+.btn.pink { background: var(--pink); }
+@media (max-width: 820px) { nav ul { display: none; } }
+
+/* ---------- hero ---------- */
+.hero { padding-block: clamp(36px, 6vw, 72px) clamp(40px, 6vw, 80px); position: relative; overflow: hidden; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .9fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+@media (max-width: 900px) { .hero .wrap { grid-template-columns: 1fr; } }
+.ransom { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin: 18px 0 26px; }
+.scrap { filter: drop-shadow(5px 6px 0 rgba(27,26,43,.28)); display: inline-block; }
+.scrap > span { display: inline-block; padding: .14em .28em .08em; font-family: var(--display); font-weight: 900; font-size: clamp(34px, 5.6vw, 76px); line-height: .92; }
+.scrap.s1 > span { background: var(--ink); color: var(--cream); font-stretch: 60%; }
+.scrap.s2 > span { background: var(--yellow); font-stretch: 130%; font-size: clamp(26px, 4.2vw, 56px); }
+.scrap.s3 > span { background: var(--cream); font-family: var(--serif); font-style: italic; font-weight: 400; }
+.scrap.s4 > span { background: var(--pink); color: var(--cream); font-stretch: 52%; text-shadow: 3px 3px 0 var(--blue); }
+.scrap.s5 > span { background: var(--blue); color: var(--cream); font-family: var(--mono); font-weight: 800; font-size: clamp(26px, 4.2vw, 56px); }
+.scrap.s6 > span { background: var(--ink); color: var(--yellow); font-stretch: 90%; }
+.scrap.s7 { flex-basis: 100%; }
+.scrap.s7 > span { background: var(--yellow); font-stretch: 116%; font-size: clamp(54px, 10vw, 138px); text-shadow: 5px 4px 0 var(--pink); position: relative; }
+.scrap.s7 > span::after { content: ""; position: absolute; left: -3%; right: -3%; top: 52%; border-top: 5px dashed var(--ink); transform: rotate(-1.2deg); }
+.scrap.s8 > span { background: transparent; font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--pink); font-size: clamp(54px, 9vw, 124px); padding-left: 0; text-shadow: 4px 4px 0 var(--blue); }
+.hero .lede { font-size: clamp(17px, 1.6vw, 21px); max-width: 34ch; margin: 0 0 24px; }
+.hero .lede b { font-family: var(--display); font-stretch: 80%; font-weight: 900; background: linear-gradient(transparent 55%, var(--yellow) 55%); }
+.stage { position: relative; aspect-ratio: 1 / 1.05; max-width: 520px; width: 100%; justify-self: center; }
+.stage::before { content: ""; position: absolute; inset: 4% 2% 14%; border-radius: 50%; background: repeating-conic-gradient(from 0deg, var(--yellow) 0 8deg, #FFE9A6 8deg 16deg); animation: spin 60s linear infinite; }
+.stage::after { content: ""; position: absolute; inset: -2% -4% 8%; border-radius: 50%; background: radial-gradient(circle, transparent 60%, var(--yellow) 61% 62%, transparent 63%); opacity: .8; }
+@keyframes spin { to { transform: rotate(1turn); } }
+#zipcv { position: relative; z-index: 1; width: 100%; height: 100%; display: block; cursor: pointer; }
+.stage .hint { position: absolute; z-index: 2; left: 50%; bottom: 0; transform: translateX(-50%); white-space: nowrap; font: 700 12px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.nametag { position: absolute; z-index: 2; top: 8%; right: -2%; transform: rotate(6deg); background: var(--pink); color: var(--cream); border: 3px solid var(--ink); border-radius: 99px; padding: 8px 16px; box-shadow: 4px 5px 0 rgba(27,26,43,.3); display: flex; gap: 10px; align-items: center; }
+.nametag b { font: 900 30px/1 var(--display); font-stretch: 60%; }
+.nametag small { font: 700 11px/1.25 var(--mono); }
+
+/* ---------- waitlist form ---------- */
+.wl { display: flex; flex-wrap: wrap; gap: 10px; max-width: 560px; }
+.wl input { flex: 1 1 240px; min-width: 0; font: 600 16px/1 var(--mono); padding: 15px 18px; border: 3px solid var(--ink); border-radius: 99px; background: var(--cream); color: var(--ink); box-shadow: inset 2px 3px 0 rgba(27,26,43,.08); }
+.wl input::placeholder { color: var(--muted); }
+.wl-note { font-size: 13px; color: var(--muted); margin: 10px 0 0; min-height: 1.4em; }
+.wl-note.ok { color: var(--blue); font-weight: 700; }
+
+/* ---------- section scaffolding ---------- */
+section.sheet { padding-block: clamp(56px, 8vw, 110px); position: relative; }
+.zipline { height: 22px; background: repeating-linear-gradient(90deg, var(--metal) 0 12px, var(--ink) 12px 14px, transparent 14px 20px), var(--violet); border-block: 3px solid var(--ink); }
+.head { display: grid; gap: 14px; margin-bottom: clamp(28px, 4vw, 48px); max-width: 900px; }
+.head h2 { font-size: clamp(40px, 6.4vw, 92px); }
+.head p { margin: 0; max-width: 60ch; font-size: 17px; }
+.flood-blue { background: var(--blue); color: var(--cream); }
+.flood-pink { background: var(--pink); color: var(--cream); }
+.flood-yellow { background: var(--yellow); }
+.flood-night { background: var(--night); color: var(--cream); }
+.halftone { background-image: radial-gradient(circle at center, rgba(39,22,159,.35) 0 1.6px, transparent 2.2px); background-size: 14px 14px; }
+
+/* ---------- film ---------- */
+.film { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 44px); align-items: center; }
+@media (max-width: 900px) { .film { grid-template-columns: 1fr; } }
+.film video { width: 100%; max-width: 100%; aspect-ratio: 16/9; display: block; border: 4px solid var(--ink); border-radius: 14px; box-shadow: 10px 12px 0 var(--ink); background: var(--ink); }
+.film h2 { font-size: clamp(38px, 5vw, 72px); }
+.film p { margin: 16px 0 0; max-width: 42ch; }
+
+/* ---------- compressor ---------- */
+.press { display: grid; gap: 26px; }
+.press .payload { background: var(--cream); color: var(--ink); border: 3px solid var(--ink); border-radius: 16px; padding: clamp(18px, 3vw, 34px); box-shadow: 8px 10px 0 var(--ink); overflow: hidden; }
+.press .payload p { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 3.2vw, 44px); line-height: 1.05; font-stretch: var(--wd, 150%); transition: font-stretch .05s linear; overflow-wrap: anywhere; }
+.press .payload p .keep { color: var(--blue); }
+.press .payload .meta { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 18px; font: 700 13px/1.3 var(--mono); color: var(--muted); }
+.press .payload .meta b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.zipctl { display: grid; gap: 10px; }
+.zipctl label { font: 800 13px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+input[type=range].zipr { -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; cursor: grab; }
+input[type=range].zipr::-webkit-slider-runnable-track { height: 18px; border-radius: 4px; border: 3px solid var(--ink); background: repeating-linear-gradient(90deg, var(--metal) 0 10px, var(--ink) 10px 12px, transparent 12px 17px), var(--violet); }
+input[type=range].zipr::-moz-range-track { height: 12px; border-radius: 4px; border: 3px solid var(--ink); background: repeating-linear-gradient(90deg, var(--metal) 0 10px, var(--ink) 10px 12px, transparent 12px 17px), var(--violet); }
+input[type=range].zipr::-webkit-slider-thumb { -webkit-appearance: none; width: 44px; height: 34px; margin-top: -11px; border-radius: 8px; border: 3px solid var(--ink); background: var(--metal); box-shadow: 3px 4px 0 var(--ink); }
+input[type=range].zipr::-moz-range-thumb { width: 38px; height: 28px; border-radius: 8px; border: 3px solid var(--ink); background: var(--metal); box-shadow: 3px 4px 0 var(--ink); }
+.scale-lab { display: flex; justify-content: space-between; font: 700 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- race ---------- */
+.race { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(14px, 2vw, 28px); }
+@media (max-width: 820px) { .race { grid-template-columns: 1fr; } }
+.term { background: var(--night); color: var(--cream); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 8px 10px 0 rgba(27,26,43,.9); overflow: hidden; position: relative; }
+.term .bar { background: var(--metal); color: var(--ink); display: flex; align-items: center; gap: 8px; padding: 10px 14px; font: 700 12px/1 var(--mono); }
+.term .bar i { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--ink); display: inline-block; }
+.term .bar .t { margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term .lab { position: absolute; top: 5px; right: 10px; padding: 4px 10px; font-size: 11px; }
+.term pre { margin: 0; padding: 16px 18px 6px; font: 500 13px/1.6 var(--mono); height: 190px; overflow: hidden; white-space: pre-wrap; }
+.term pre .tn { color: var(--yellow); font-weight: 800; }
+.term pre .zp { background: rgba(39,72,232,.6); border-radius: 4px; padding: 0 4px; }
+.term pre .bl { color: var(--pink); }
+.term .ctx { display: flex; align-items: center; gap: 12px; padding: 6px 18px 12px; font: 700 11px/1 var(--mono); letter-spacing: .1em; }
+.term .ctx .m { flex: 1; height: 14px; border-radius: 99px; background: rgba(255,248,236,.14); overflow: hidden; }
+.term .ctx .m > span { display: block; height: 100%; border-radius: 99px; }
+.term .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px 14px; }
+.term .stats div { background: rgba(255,248,236,.08); border-radius: 10px; padding: 10px 12px; }
+.term .stats div.win { background: var(--blue); }
+.term .stats small { display: block; font: 700 10px/1 var(--mono); letter-spacing: .12em; opacity: .75; }
+.term .stats b { display: block; font: 800 clamp(20px, 2.4vw, 30px)/1.1 var(--mono); font-variant-numeric: tabular-nums; margin-top: 6px; }
+.stampbox { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-top: 30px; align-items: center; }
+.stamp { font: 900 clamp(24px, 3.2vw, 44px)/1 var(--display); font-stretch: 80%; padding: 10px 18px; border: 4px solid currentColor; border-radius: 12px; transform: rotate(-3deg); background: var(--cream); }
+.stamp.b { color: var(--blue); } .stamp.p { color: var(--pink); transform: rotate(2deg); background: var(--pink); color: var(--cream); border-color: var(--ink); }
+.lanes { display: grid; gap: 10px; margin-top: 26px; }
+.lane { position: relative; height: 48px; border: 3px solid var(--ink); border-radius: 99px; background: var(--cream); overflow: hidden; }
+.lane .fill { position: absolute; inset: 0 auto 0 0; width: var(--p, 100%); }
+.lane span { position: relative; z-index: 1; display: flex; height: 100%; align-items: center; justify-content: space-between; padding-inline: 18px; font: 800 13px/1 var(--mono); letter-spacing: .08em; }
+.replay { background: none; border: 0; font: 800 13px/1 var(--mono); text-decoration: underline; text-decoration-thickness: 2px; cursor: pointer; color: inherit; padding: 6px 0; }
+
+/* ---------- how ---------- */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 26px); counter-reset: s; }
+@media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+.step { background: var(--cream); border: 3px solid var(--ink); border-radius: 4px; padding: 22px 22px 26px; position: relative; clip-path: polygon(0 2%, 3% 0, 20% 1.5%, 40% 0, 62% 1.8%, 80% 0, 100% 1.5%, 99% 30%, 100% 58%, 98.8% 100%, 70% 98.5%, 45% 100%, 20% 98.4%, 0 100%, 1.2% 60%); }
+.step::before { counter-increment: s; content: counter(s, decimal-leading-zero); font: 900 64px/1 var(--display); font-stretch: 55%; color: var(--pink); text-shadow: 3px 3px 0 var(--ink); display: block; margin-bottom: 10px; }
+.step h3 { font-size: 28px; font-stretch: 85%; margin-bottom: 10px; }
+.step p { margin: 0; font-size: 15px; }
+.cache { margin-top: clamp(22px, 3vw, 40px); display: grid; gap: 10px; }
+.cache .row { display: grid; grid-template-columns: 110px repeat(11, minmax(0, 1fr)); gap: 6px; align-items: center; font: 700 12px/1 var(--mono); }
+.cache .row i { height: 40px; border: 2.5px solid var(--ink); border-radius: 6px; background: var(--cream); display: grid; place-items: center; font-style: normal; font-size: 11px; overflow: hidden; }
+.cache .row i.p { background: var(--blue); color: var(--cream); }
+.cache .row i.n { background: var(--pink); color: var(--cream); }
+.cache .hit { justify-self: start; margin-left: 116px; }
+@media (max-width: 600px) { .cache .row { grid-template-columns: 70px repeat(11, minmax(0, 1fr)); } .cache .row i { font-size: 0; } .cache .hit { margin-left: 76px; } }
+
+/* ---------- benchmarks ---------- */
+.bench { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 24px); }
+@media (max-width: 980px) { .bench { grid-template-columns: 1fr; } }
+.card { background: var(--cream); color: var(--ink); border: 3px solid var(--ink); border-radius: 10px; padding: 20px 20px 22px; box-shadow: 8px 10px 0 var(--ink); min-width: 0; }
+.card h3 { font-size: 30px; font-stretch: 80%; }
+.card .unit { font: 600 12px/1.3 var(--mono); color: var(--muted); margin: 6px 0 16px; }
+.bars { position: relative; display: grid; gap: 12px; padding-bottom: 30px; }
+.brow { display: grid; gap: 4px; }
+.brow .n { font: 700 12px/1.2 var(--mono); display: flex; justify-content: space-between; gap: 8px; }
+.brow .n b { font-variant-numeric: tabular-nums; }
+.brow .t { height: 26px; border: 2.5px solid var(--ink); border-radius: 5px; background: var(--paper-2); position: relative; overflow: hidden; }
+.brow .t > span { position: absolute; inset: 0 auto 0 0; background: #B9B2A6; background-image: radial-gradient(rgba(27,26,43,.3) 0 1.2px, transparent 1.6px); background-size: 7px 7px; }
+.brow.z .n { color: var(--blue); font-family: var(--display); font-weight: 900; font-size: 18px; }
+.brow.z .t > span { background-color: var(--blue); background-image: radial-gradient(rgba(39,22,159,.5) 0 1.2px, transparent 1.6px); }
+.base { position: absolute; top: -6px; bottom: 22px; border-left: 3px dashed var(--ink); }
+.base small { position: absolute; bottom: -24px; left: 0; transform: translateX(-50%); white-space: nowrap; font: 800 10px/1 var(--mono); background: var(--ink); color: var(--cream); padding: 4px 6px; border-radius: 4px; }
+.delta { font: 800 11px/1 var(--mono); padding: 3px 6px; border-radius: 99px; color: var(--cream); }
+.delta.up { background: var(--blue); } .delta.dn { background: var(--pink); }
+
+/* ---------- calculator ---------- */
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+@media (max-width: 860px) { .calc { grid-template-columns: 1fr; } }
+.calc .in { display: grid; gap: 12px; }
+.calc label { font: 800 13px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.money { display: flex; align-items: center; border: 3px solid var(--ink); border-radius: 14px; background: var(--cream); box-shadow: 6px 8px 0 var(--ink); }
+.money span { font: 900 40px/1 var(--display); padding-left: 18px; }
+.money input { width: 100%; min-width: 0; border: 0; background: transparent; font: 900 clamp(30px, 4.4vw, 52px)/1 var(--display); font-stretch: 70%; padding: 14px 16px 14px 6px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.money input:focus { outline: none; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button { font: 700 13px/1 var(--mono); padding: 9px 14px; border-radius: 99px; border: 2.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+.presets button[aria-pressed=true] { background: var(--ink); color: var(--cream); }
+.out { text-align: left; }
+.out .big { font: 900 clamp(64px, 11vw, 150px)/.9 var(--display); font-stretch: 70%; color: var(--yellow); -webkit-text-stroke: 3px var(--ink); text-shadow: 7px 8px 0 var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.out p { margin: 14px 0 0; max-width: 40ch; }
+.stack { display: flex; align-items: flex-end; gap: 6px; height: 170px; margin-top: 22px; }
+.stack i { flex: 1; background: #7FCCA4; border: 2.5px solid var(--ink); border-radius: 3px; height: var(--h); background-image: linear-gradient(90deg, transparent 44%, var(--yellow) 44% 56%, transparent 56%); position: relative; }
+.stack i.cut { background-color: var(--yellow); }
+
+/* ---------- 2000 ---------- */
+.y2k { background: #2A8C8C; background-image: radial-gradient(rgba(27,26,43,.25) 0 1.5px, transparent 2px); background-size: 16px 16px; color: var(--ink); }
+.win98 { background: #CFC8BB; border: 3px solid var(--ink); box-shadow: inset 3px 3px 0 #F7F1E6, inset -3px -3px 0 #6E675D, 10px 12px 0 rgba(27,26,43,.5); max-width: 980px; margin-inline: auto; }
+.win98 .tb { background: linear-gradient(90deg, #1B1A6E, var(--blue)); color: var(--cream); font: 800 14px/1 var(--mono); padding: 10px 12px; display: flex; justify-content: space-between; margin: 5px; }
+.win98 .tb span:last-child { letter-spacing: 6px; }
+.win98 .body { padding: clamp(20px, 3vw, 36px); display: grid; gap: 20px; }
+.wordart { font: 900 clamp(42px, 7.4vw, 104px)/.95 var(--display); font-stretch: 96%; transform: skewX(-10deg); background: linear-gradient(180deg, var(--yellow), var(--pink) 60%, var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: 2px var(--ink); filter: drop-shadow(5px 5px 0 var(--violet)); }
+.win98 .body p { margin: 0; font: 600 clamp(15px, 1.6vw, 19px)/1.6 var(--mono); max-width: 62ch; background: var(--cream); border: 2px solid var(--ink); box-shadow: inset 2px 2px 0 #6E675D; padding: 16px 18px; }
+.prog { height: 34px; border: 2px solid var(--ink); box-shadow: inset 2px 2px 0 #6E675D; background: var(--cream); display: flex; gap: 4px; padding: 5px; }
+.prog i { flex: 1; background: var(--blue); }
+.prog i.off { background: transparent; }
+
+/* ---------- final CTA ---------- */
+.final { text-align: center; }
+.final h2 { font-size: clamp(48px, 9vw, 132px); }
+.final .wl { margin: 28px auto 0; justify-content: center; }
+.final .url { display: inline-block; margin-top: 18px; font: 800 18px/1 var(--mono); }
+footer { border-top: 3px solid var(--ink); padding-block: 26px calc(26px + env(safe-area-inset-bottom, 0px)); font: 600 13px/1.5 var(--mono); }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.fine { font-size: 12px; color: var(--muted); max-width: 70ch; }
+.flood-blue .fine, .flood-night .fine { color: rgba(255,248,236,.72); }
+</style>
+
+<div class="zipbar" aria-hidden="true"><div class="teeth"></div><div class="open" id="zipOpen"></div><div class="slider" id="zipSlider"></div></div>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Zip Labs home"><span class="z">ZIP</span><span class="a">α</span></a>
+    <ul>
+      <li><a href="#film">Film</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#proof">Proof</a></li>
+      <li><a href="#savings">Savings</a></li>
+      <li><a href="#labs">Zip Labs</a></li>
+    </ul>
+    <a class="btn pink" href="#join">Join the waitlist</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="tag">New · Zip α token compression model</span>
+      <h1 class="ransom" aria-label="Did OpenAI just cut your Pro plan tokens in half?">
+        <span class="scrap s1" data-rot="-3"><span>DID</span></span>
+        <span class="scrap s2" data-rot="2"><span>OPENAI</span></span>
+        <span class="scrap s3" data-rot="-2"><span>just</span></span>
+        <span class="scrap s4" data-rot="4"><span>CUT</span></span>
+        <span class="scrap s5" data-rot="2"><span>YOUR</span></span>
+        <span class="scrap s6" data-rot="-2"><span>PRO PLAN</span></span>
+        <span class="scrap s7" data-rot="-1"><span>TOKENS</span></span>
+        <span class="scrap s8"><span>in half?</span></span>
+      </h1>
+      <p class="lede">We can make your subscription last <b>at least 20% longer.</b> With no downside. Zip compresses every payload your coding agent sends, so it reads less, takes fewer turns and finishes sooner.</p>
+      <form class="wl" id="wl1" novalidate>
+        <input id="email1" type="email" placeholder="you@company.com" aria-label="Work email" autocomplete="email" required>
+        <button class="btn" type="submit">Get early access →</button>
+      </form>
+      <p class="wl-note" id="note1" aria-live="polite"></p>
+    </div>
+    <div class="stage">
+      <canvas id="zipcv" aria-label="Zip, the Zip Labs mascot. Click to zip it." role="img"></canvas>
+      <div class="nametag"><b>ZIP</b><small>the compressor<br>debut 2026</small></div>
+      <div class="hint">tap Zip to zip it</div>
+    </div>
+  </div>
+</header>
+
+<div class="zipline" aria-hidden="true"></div>
+
+<section class="sheet flood-yellow" id="film">
+  <div class="wrap film">
+    <video src="zip-film.mp4" poster="poster.jpg" controls muted playsinline loop preload="metadata"></video>
+    <div>
+      <p class="eyebrow">The launch film · 90 s</p>
+      <h2>Tokenmaxing <span class="acc">is dead.</span></h2>
+      <p>For some AI teams, tokens now cost more than engineers. Watch Zip α debut, then zip the bloat out of a real agent loop. Sound on.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="how">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Lossless, on purpose</p>
+      <h2 class="mis">Same meaning. <span class="acc">Fewer</span> tokens.</h2>
+      <p>Drag the zipper. The words get narrower, and every word stays. That is the whole idea: we rank each token by semantic value and cost, then compress the payload before it leaves for your model provider.</p>
+    </div>
+    <div class="press">
+      <div class="payload">
+        <p id="squeeze"><span class="keep">Fix the flaky parser test.</span> Context: the tokenizer drops the last symbol when the input ends without a newline. Logs repeat the same retry warning forty times. Stack traces repeat three frames. Keep the failing assertion, the file path and the diff.</p>
+        <div class="meta"><span>width <b id="wdOut">150%</b></span><span>words kept <b>all of them</b></span><span>meaning kept <b>all of it</b></span></div>
+      </div>
+      <div class="zipctl">
+        <label for="zipr">Zip the payload</label>
+        <input class="zipr" id="zipr" type="range" min="0" max="100" value="0">
+        <div class="scale-lab"><span>bloated</span><span>zipped</span></div>
+      </div>
+    </div>
+    <div class="steps" style="margin-top: clamp(40px, 6vw, 72px)">
+      <div class="step"><h3>Your agent calls a model</h3><p>Codex, Claude Code or your own loop. Point its base URL at Zip. Nothing else changes.</p></div>
+      <div class="step"><h3>Zip compiles the payload</h3><p>A prompt compiler scores every token for meaning and price, then rewrites repeated logs, stale tool output and boilerplate.</p></div>
+      <div class="step"><h3>Cache stays warm</h3><p>We keep the prompt prefix stable across turns, so provider cache hits survive compression. Yes, we actually optimize for cache.</p></div>
+    </div>
+    <div class="cache" aria-label="Two requests share an identical compressed prefix, which is served from cache">
+      <div class="row"><span>request 1</span><i class="p">sys1</i><i class="p">sys2</i><i class="p">sys3</i><i class="p">sys4</i><i class="p">sys5</i><i class="p">sys6</i><i class="p">sys7</i><i>msg</i><i>msg</i><i>msg</i><i>msg</i></div>
+      <div class="row"><span>request 2</span><i class="p">sys1</i><i class="p">sys2</i><i class="p">sys3</i><i class="p">sys4</i><i class="p">sys5</i><i class="p">sys6</i><i class="p">sys7</i><i class="n">msg</i><i class="n">msg</i><i class="n">msg</i><i class="n">msg</i></div>
+      <span class="tag hit" style="background: var(--ink); color: var(--yellow)">⚡ Identical zipped prefix = cache hit</span>
+    </div>
+  </div>
+</section>
+
+<div class="zipline" aria-hidden="true"></div>
+
+<section class="sheet flood-blue halftone" id="proof">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Codex × Terminal-Bench · same task · same model</p>
+      <h2>Fewer turns. <span class="acc">Faster.</span> 20% cheaper.</h2>
+      <p>Most compressors trade accuracy for savings. Zip cuts context bloat, so the agent stops rereading noise and the run gets shorter.</p>
+    </div>
+    <div class="race" id="race">
+      <div class="term" data-side="base">
+        <div class="bar"><i style="background: var(--pink)"></i><i style="background: var(--yellow)"></i><i style="background: var(--blue)"></i><span class="t">codex · without zip</span></div>
+        <span class="tag lab">Without Zip</span>
+        <pre></pre>
+        <div class="ctx">CONTEXT <div class="m"><span></span></div><em></em></div>
+        <div class="stats"><div><small>TURNS</small><b data-k="turns"></b></div><div><small>TIME</small><b data-k="secs"></b></div><div><small>COST</small><b data-k="cost"></b></div></div>
+      </div>
+      <div class="term" data-side="zip">
+        <div class="bar"><i style="background: var(--pink)"></i><i style="background: var(--yellow)"></i><i style="background: var(--blue)"></i><span class="t">codex · with zip α</span></div>
+        <span class="tag lab" style="background: var(--blue); border: 2px solid var(--cream)">With Zip</span>
+        <pre></pre>
+        <div class="ctx">CONTEXT <div class="m"><span></span></div><em></em></div>
+        <div class="stats"><div class="win"><small>TURNS</small><b data-k="turns"></b></div><div class="win"><small>TIME</small><b data-k="secs"></b></div><div class="win"><small>COST</small><b data-k="cost"></b></div></div>
+      </div>
+    </div>
+    <div class="lanes" aria-hidden="true">
+      <div class="lane" id="laneBase"><div class="fill" style="background: var(--pink)"></div><span>WITHOUT ZIP <em id="lbB">2nd</em></span></div>
+      <div class="lane" id="laneZip"><div class="fill" style="background: var(--yellow)"></div><span>WITH ZIP <em id="lbZ">1st ✓</em></span></div>
+    </div>
+    <div class="stampbox">
+      <span class="stamp b">FEWER TURNS</span><span class="stamp b" style="transform: rotate(2deg)">FINISHES FASTER</span><span class="stamp p">20% CHEAPER</span>
+      <button class="replay" id="replay" type="button">▶ Replay the run</button>
+    </div>
+    <p class="fine" id="raceFine" style="margin-top: 22px"></p>
+  </div>
+</section>
+
+<section class="sheet" id="bench">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Benchmarks · vs Microsoft LLMLingua-2 and The Token Company</p>
+      <h2 class="mis-blue">The only compressor that <span class="acc">improves</span> the model.</h2>
+      <p>Dashed line: the same model with no compression. Competitors land below it. Zip α lands above it, because cutting context bloat helps the model focus.</p>
+    </div>
+    <div class="bench" id="benchGrid"></div>
+    <p class="fine" id="benchFine" style="margin-top: 22px"></p>
+  </div>
+</section>
+
+<div class="zipline" aria-hidden="true"></div>
+
+<section class="sheet flood-pink" id="savings">
+  <div class="wrap calc">
+    <div class="in">
+      <p class="eyebrow">Free money, no downside</p>
+      <h2 style="font-size: clamp(40px, 6vw, 84px)">An average unicorn spends $100M on agentic coding.</h2>
+      <label for="spend" style="margin-top: 18px">Your yearly spend on agentic coding</label>
+      <div class="money"><span>$</span><input id="spend" inputmode="numeric" value="100,000,000" aria-describedby="saveNote"></div>
+      <div class="presets" role="group" aria-label="Example spend">
+        <button type="button" data-v="250000">Seed · $250K</button>
+        <button type="button" data-v="5000000">Series B · $5M</button>
+        <button type="button" data-v="100000000" aria-pressed="true">Unicorn · $100M</button>
+      </div>
+    </div>
+    <div class="out">
+      <p class="eyebrow">We can save you at least</p>
+      <div class="big" id="saveOut">$20M</div>
+      <div class="stack" id="stack" aria-hidden="true"></div>
+      <p id="saveNote">Based on at least 20% fewer tokens billed. Yellow bundles are the part Zip zips off.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sheet y2k" id="labs">
+  <div class="wrap">
+    <div class="win98">
+      <div class="tb"><span>ZipLabs.exe</span><span>_□×</span></div>
+      <div class="body">
+        <div class="wordart">WE ARE ZIP LABS:</div>
+        <p>a research team that started working on file and database compression back in the year 2000. Zip α is our first token compression model: the first usable compression built for agentic coding.</p>
+        <div class="prog" id="prog" aria-hidden="true"></div>
+        <div style="font: 700 13px/1.4 var(--mono)">database.db · 2000 → tokens · 2026 · <span id="yr">2026</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sheet flood-night final" id="join">
+  <div class="wrap">
+    <p class="eyebrow" style="color: var(--yellow)">Zip α · debut 2026</p>
+    <h2>Sign up for the <span class="acc" style="color: var(--pink)">waitlist.</span></h2>
+    <form class="wl" id="wl2" novalidate>
+      <input id="email2" type="email" placeholder="you@company.com" aria-label="Work email" autocomplete="email" required>
+      <button class="btn pink" type="submit">Join the waitlist →</button>
+    </form>
+    <p class="wl-note" id="note2" aria-live="polite" style="color: rgba(255,248,236,.75)"></p>
+    <span class="url">zipailabs.com</span>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap"><span>© 2026 Zip Labs · token compression research since 2000</span><span>Printed in riso on cream stock. Every pixel drawn in code.</span></div>
+</footer>
+
+<script>
+/*ENGINE*/
+</script>
+<script>
+'use strict';
+// ---------- data (placeholders until Zip Labs publishes real runs) ----------
+/*DATA*/
+const PH = DATA.placeholder;
+
+// ---------- paper tooth (generated once, tiled) ----------
+(() => {
+  const c = document.createElement('canvas'); c.width = c.height = 240; const x = c.getContext('2d'); const img = x.createImageData(240, 240); const r = rng(9);
+  for (let i = 0; i < img.data.length; i += 4) { const v = r() < .5 ? 0 : 255, a = r() * 22; img.data[i] = img.data[i + 1] = img.data[i + 2] = v === 0 ? 90 : 255; img.data[i + 3] = a; }
+  x.putImageData(img, 0, 0);
+  for (let n = 0; n < 60; n++) { x.strokeStyle = `rgba(120,105,85,${.05 + r() * .08})`; x.lineWidth = .6; const px = r() * 240, py = r() * 240, a = r() * TAU, L = 5 + r() * 16; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * L, py + Math.sin(a) * L); x.stroke(); }
+  document.documentElement.style.setProperty('--tooth', `url(${c.toDataURL()})`);
+})();
+
+// ---------- torn scraps ----------
+document.querySelectorAll('.scrap').forEach((el, i) => {
+  const inner = el.firstElementChild; if (el.classList.contains('s8')) return;
+  const r = rng(i + 11), pts = [], edge = (x0, y0, x1, y1, n, nx, ny) => { for (let k = 0; k < n; k++) { const t = k / n, d = (r() - .5) * 2.2; pts.push(`${(x0 + (x1 - x0) * t + nx * d).toFixed(2)}% ${(y0 + (y1 - y0) * t + ny * d).toFixed(2)}%`); } };
+  edge(1, 2, 99, 1, 14, 0, 1); edge(99, 1, 99.5, 98, 5, -1, 0); edge(99.5, 98, 1, 99, 14, 0, -1); edge(1, 99, 1, 2, 5, 1, 0);
+  inner.style.clipPath = `polygon(${pts.join(',')})`;
+  el.style.transform = `rotate(${el.dataset.rot || 0}deg)`;
+});
+
+// ---------- scroll zipper ----------
+const zo = document.getElementById('zipOpen'), zs = document.getElementById('zipSlider');
+const onScroll = () => { const h = document.documentElement, p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight); zo.style.width = (100 - p * 100) + '%'; zs.style.left = `calc(${p * 100}% + ${15 - p * 30}px)`; };
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+// ---------- Zip, live ----------
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cv = document.getElementById('zipcv'), zx = cv.getContext('2d');
+let zipStart = -9, look = [0, 0], lookT = [0, 0];
+function sizeCv() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); }
+sizeCv(); addEventListener('resize', sizeCv);
+cv.addEventListener('click', () => { zipStart = performance.now() / 1000; });
+cv.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') zipStart = performance.now() / 1000; });
+cv.tabIndex = 0;
+addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); lookT = [clamp((e.clientX - r.left - r.width / 2) / r.width * 2, -1, 1), clamp((e.clientY - r.top - r.height / 2) / r.height * 2, -1, 1)]; }, { passive: true });
+function drawZip(now) {
+  const t = now / 1000, w = cv.width, h = cv.height; zx.setTransform(1, 0, 0, 1, 0, 0); zx.clearRect(0, 0, w, h);
+  look[0] += (lookT[0] - look[0]) * .12; look[1] += (lookT[1] - look[1]) * .12;
+  const s = w * .27, dt = t - zipStart, k = reduce ? 1 : E.ioC(clamp((dt - .1) / .7)), inMove = dt >= 0 && dt < 1.6;
+  const beat = reduce ? 0 : Math.exp(-frac(t / .5) * 6);
+  const o = { t: reduce ? 1.2 : t, seed: 3, look, eyes: inMove && dt > .8 ? 'wink' : 'open', mouth: inMove ? .75 * (1 - k) : 0, slider: inMove ? k : 1, dy: -beat * .05, blink: reduce ? 0 : undefined };
+  if (inMove && dt < 1.0) { o.hR = [lerp(-.46, .46, k), .66]; o.cR = [lerp(.35, .85, k), 1.05]; o.pull = .2; }
+  zipChar(zx, w / 2, h * .86, s, o);
+  if (inMove && dt > .8) sparkles(zx, w / 2 + s * .5, h * .86 - s * 1.2, s * 1.1, t, 7, 21);
+  if (!reduce) requestAnimationFrame(drawZip);
+}
+requestAnimationFrame(drawZip);
+
+// ---------- width-axis compressor ----------
+const zr = document.getElementById('zipr'), sq = document.getElementById('squeeze'), wdOut = document.getElementById('wdOut');
+const setWd = () => { const wd = Math.round(150 - zr.value * 1.0); sq.style.setProperty('--wd', wd + '%'); wdOut.textContent = wd + '%'; };
+zr.addEventListener('input', setWd); setWd();
+
+// ---------- race ----------
+const TOOLS = ['read_file src/parser.py', '$ pytest -q tests/test_parser.py', 'grep -rn "tokenize(" src/', 'edit src/parser.py +14 −6', '$ python -m bench.check', 'read_file tests/fixtures/big.log', '$ git diff --stat', '$ pytest -q'];
+const OUTS = ['3 failed, 12 passed', 'AssertionError: expected 42 tokens', '14 matches in 5 files', 'ok', '2 failed, 13 passed', '…48,213 lines…', '1 failed, 14 passed'];
+function transcript(side) {
+  const d = DATA.race[side], L = [], r = rng(side === 'zip' ? 77 : 33);
+  for (let i = 1; i <= d.turns; i++) {
+    L.push(`<span class="tn">› turn ${String(i).padStart(2, '0')}</span>`);
+    L.push('  ' + TOOLS[Math.floor(r() * TOOLS.length)]);
+    if (side === 'zip') { const a = 14 + r() * 16; L.push(`  <span class="zp">zip ${a.toFixed(1)}k → ${(a * (.74 + r() * .08)).toFixed(1)}k tok</span>`); }
+    else if (r() < .5) L.push(`  <span class="bl">ctx +${(8 + r() * 14).toFixed(1)}k tok</span>`);
+    L.push('  ' + (i === d.turns ? '15 passed ✓' : OUTS[Math.floor(r() * OUTS.length)]));
+  }
+  return L;
+}
+const TR = { base: transcript('base'), zip: transcript('zip') };
+const fmtT = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+function paintRace(p) { // p = progress of the slower run (0..1)
+  const tb = DATA.race.base.secs, tz = DATA.race.zip.secs;
+  for (const el of document.querySelectorAll('.term')) {
+    const side = el.dataset.side, d = DATA.race[side], q = clamp(p * tb / d.secs), lines = TR[side], n = Math.max(1, Math.round(q * lines.length));
+    el.querySelector('pre').innerHTML = lines.slice(Math.max(0, n - 9), n).join('\n');
+    const m = el.querySelector('.ctx .m > span'), cx = .08 + (d.ctx - .08) * q;
+    m.style.width = (cx * 100) + '%'; m.style.background = side === 'zip' ? 'var(--blue)' : 'repeating-linear-gradient(-45deg, var(--pink) 0 8px, #D93C94 8px 14px)';
+    el.querySelector('.ctx em').textContent = Math.round(cx * 100) + '%';
+    el.querySelector('[data-k=turns]').textContent = Math.max(0, Math.ceil(q * d.turns));
+    el.querySelector('[data-k=secs]').textContent = fmtT(d.secs * q);
+    el.querySelector('[data-k=cost]').textContent = '$' + (d.cost * q).toFixed(2);
+  }
+  document.querySelector('#laneBase .fill').style.width = (p * 100) + '%';
+  document.querySelector('#laneZip .fill').style.width = (clamp(p * tb / tz) * 100) + '%';
+  document.getElementById('lbB').textContent = p >= 1 ? '2nd' : ''; document.getElementById('lbZ').textContent = p * tb >= tz ? '1st ✓' : '';
+}
+paintRace(1); // complete at rest
+let raceRun = 0;
+document.getElementById('replay').addEventListener('click', () => {
+  const id = ++raceRun, t0 = performance.now(), dur = 6000;
+  const step = now => { if (id !== raceRun) return; const p = clamp((now - t0) / dur); paintRace(p); if (p < 1) requestAnimationFrame(step); };
+  if (reduce) paintRace(1); else requestAnimationFrame(step);
+});
+const saved = 1 - DATA.race.zip.cost / DATA.race.base.cost;
+document.getElementById('raceFine').textContent = (PH ? 'Placeholder data. Sample run shown for layout; replace with Zip Labs’ published run. ' : '') + `Task: ${DATA.race.task}. Cost with Zip is ${Math.round(saved * 100)}% lower.`;
+
+// ---------- benchmarks ----------
+const grid = document.getElementById('benchGrid');
+DATA.bench.forEach(B => {
+  const max = Math.max(B.base, ...B.rows.map(r => r[1])) * 1.1, pct = v => (v / max * 100).toFixed(2) + '%';
+  const rows = B.rows.map(([n, v]) => { const d = v - B.base, z = n.startsWith('Zip'); return `<div class="brow${z ? ' z' : ''}"><div class="n"><span>${n}</span><span><b>${v.toFixed(1)}</b> <span class="delta ${d >= 0 ? 'up' : 'dn'}">${d >= 0 ? '▲ +' : '▼ '}${d.toFixed(1)}</span></span></div><div class="t"><span style="width:${pct(v)}"></span></div></div>`; }).join('');
+  grid.insertAdjacentHTML('beforeend', `<article class="card"><h3>${B.name}</h3><p class="unit">${B.unit} · higher is better</p>${PH ? '<span class="tag" style="margin-bottom:14px">Placeholder data</span>' : ''}<div class="bars">${rows}<div class="base" style="left:${pct(B.base)}"><small>no compression ${B.base.toFixed(1)}</small></div></div></article>`);
+});
+// baseline must sit inside the bar track, which starts at 0 of the .t element: align by track width
+document.getElementById('benchFine').textContent = PH ? 'Placeholder data. These numbers illustrate the layout only and must be replaced with Zip Labs’ measured results before launch.' : 'Scores are for the same model with each compressor applied.';
+
+// ---------- savings calculator ----------
+const spend = document.getElementById('spend'), saveOut = document.getElementById('saveOut'), stack = document.getElementById('stack');
+const money = v => v >= 1e9 ? '$' + (v / 1e9).toFixed(v % 1e9 ? 1 : 0) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(v % 1e6 ? 1 : 0) + 'M' : v >= 1e3 ? '$' + Math.round(v / 1e3) + 'K' : '$' + Math.round(v);
+for (let i = 0; i < 10; i++) stack.insertAdjacentHTML('beforeend', `<i class="${i >= 8 ? 'cut' : ''}" style="--h:${60 + i * 11}%"></i>`);
+const calc = () => { const v = Number(spend.value.replace(/[^0-9.]/g, '')) || 0; saveOut.textContent = money(v * .2); document.querySelectorAll('.presets button').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === v))); };
+spend.addEventListener('input', calc);
+spend.addEventListener('blur', () => { const v = Number(spend.value.replace(/[^0-9.]/g, '')) || 0; spend.value = v.toLocaleString('en-US'); });
+document.querySelectorAll('.presets button').forEach(b => b.addEventListener('click', () => { spend.value = Number(b.dataset.v).toLocaleString('en-US'); calc(); }));
+calc();
+
+// ---------- 2000 progress ----------
+const prog = document.getElementById('prog'); for (let i = 0; i < 24; i++) prog.insertAdjacentHTML('beforeend', '<i></i>');
+
+// ---------- waitlist (preview: no backend connected) ----------
+[['wl1', 'email1', 'note1'], ['wl2', 'email2', 'note2']].forEach(([f, i, n]) => {
+  document.getElementById(f).addEventListener('submit', e => {
+    e.preventDefault(); const inp = document.getElementById(i), note = document.getElementById(n), v = inp.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { note.className = 'wl-note'; note.textContent = 'Enter a work email like you@company.com.'; inp.focus(); return; }
+    note.className = 'wl-note ok'; note.textContent = `Zipped. ${v} is on the list. (Preview site: sign-ups are not stored yet.)`; inp.value = '';
+  });
+});
+</script>
