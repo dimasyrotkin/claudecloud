@@ -11,7 +11,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(_req: Request, { params }: Ctx) {
   const c = await getCreator((await params).id);
   if (!c) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(dashboardPayload(c));
+  return NextResponse.json(await dashboardPayload(c));
 }
 
 export async function PATCH(req: Request, { params }: Ctx) {
@@ -35,12 +35,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
     if (!(await applyPreference(c, body.prefer.topic, body.prefer.more !== false))) {
       return NextResponse.json({ error: "Unknown topic" }, { status: 400 });
     }
-    return NextResponse.json(dashboardPayload(c));
+    return NextResponse.json(await dashboardPayload(c));
   }
   if (typeof body.note === "string" && body.note.trim()) {
     await addNote(c, body.note);
   } else {
     await saveCreator(c);
   }
-  return NextResponse.json(dashboardPayload(c));
+  return NextResponse.json(await dashboardPayload(c));
 }

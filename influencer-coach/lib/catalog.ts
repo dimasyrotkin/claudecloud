@@ -20,7 +20,8 @@ export const TOPICS: Topic[] = [
   { id: "repurposing", label: "Repurposing", blurb: "One idea, many formats" },
   { id: "monetization", label: "Brand deals & money", blurb: "Pricing, pitching, negotiating" },
   { id: "niche", label: "Niche & personal brand", blurb: "Positioning and point of view" },
-  { id: "wellbeing", label: "Burnout & boundaries", blurb: "Sustainable creating, comparison, hate comments" },
+  { id: "wellbeing", label: "Burnout & boundaries", blurb: "Sustainable creating, rest, hate comments" },
+  { id: "psychology", label: "Creator psychology", blurb: "Impostor feelings, comparison, perfectionism, fear of being seen" },
   { id: "safety", label: "Privacy & safety", blurb: "Doxxing, location leaks, stalkers, harassment" },
 ];
 
@@ -120,6 +121,7 @@ export const LIBRARY: Record<string, { title: string; body: string; action: stri
     { title: "Film once, cut three", body: "Plan a long recording so you can cut a main video and 2 shorts from it.", action: "Outline your next shoot with 3 clip-able moments marked." },
   ],
   monetization: [
+    { title: "Gifted is not paid", body: "Micro-creators get lots of free-product offers. Gifting is fine when you would have bought it anyway, but any required post, deadline or usage rights is work, and work gets a fee. Micro audiences often convert better than big ones. That is your pitch.", action: "Write a one-line reply for gifting offers that asks for a paid rate when deliverables are required." },
     { title: "Price from value, not followers", body: "Rates based purely on follower count undersell creators with engaged niches. Factor usage rights, exclusivity and production time.", action: "Write your rate card with separate lines for usage rights and exclusivity." },
     { title: "Never accept the first offer", body: "Brands expect negotiation. A polite counter with a reason often lands noticeably higher. Industry surveys report creator pay gaps by gender and race, so anchor high on purpose.", action: "Draft a counter-offer template you can reuse." },
     { title: "Build a one-page media kit", body: "Audience demographics, 3 best results, past partners, and a clear contact. Keep it to one page.", action: "Create or refresh your one-page media kit today." },
@@ -133,6 +135,11 @@ export const LIBRARY: Record<string, { title: string; body: string; action: stri
     { title: "Separate your worth from your views", body: "Analytics measure a post, not you. Check numbers at a fixed time, not all day.", action: "Pick one daily 'stats window' and turn off view-count notifications." },
     { title: "Have a hate-comment protocol", body: "Decide in advance: delete, block, or ignore. Decisions made in advance cost less emotional energy than ones made at 11pm.", action: "Write your 3-line protocol and add keyword filters for the worst words." },
     { title: "Schedule a creative day off", body: "Rest is part of the work. Burnout usually shows up first as dread before filming.", action: "Put one no-content day in your calendar this week." },
+  ],
+  psychology: [
+    { title: "Name the critic, then post anyway", body: "Before posting, the inner voice says \"who are you to talk about {niche}?\". Notice it and label it (\"there's the impostor story\") instead of arguing with it. Labelling a thought loosens its grip. You don't have to wait for the feeling to go away before you act.", action: "Write down the exact sentence your inner critic says before you post. Post anyway, then note what actually happened." },
+    { title: "Compare with your past self, not their highlight reel", body: "Comparison on {platform} is rigged: you see their best 1% next to your raw 100%. This hits harder on visual platforms, where appearance gets judged alongside the work. Your own trend line is the honest comparison.", action: "Put your first post next to your latest one and list 3 things you do better now." },
+    { title: "Lower the bar on purpose", body: "Perfectionism often feels like high standards, but it is mostly a way to avoid being judged. Aim for 'good enough to learn from'. Every post is an experiment, not a verdict on you.", action: "Ship one post today at 80% polish and treat it as data." },
   ],
   safety: [
     { title: "Audit your background", body: "Windows, street signs, mail, school uniforms and reflective surfaces can reveal where you live. This risk is disproportionately faced by women creators.", action: "Review your last 5 posts for location clues and archive anything risky." },

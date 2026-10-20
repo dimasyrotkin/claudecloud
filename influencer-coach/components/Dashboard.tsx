@@ -5,6 +5,7 @@ import { TOPICS, styleLabel, topicLabel } from "@/lib/catalog.ts";
 import type { DashboardPayload } from "@/lib/api.ts";
 import type { ArmView } from "@/lib/learner.ts";
 import type { Channel, FeedbackTag, Reaction, Tip } from "@/lib/types.ts";
+import PostReviews from "./PostReviews.tsx";
 
 const TAGS: { id: FeedbackTag; label: string }[] = [
   { id: "too_long", label: "Too long" },
@@ -83,7 +84,7 @@ function TipCard({ tip, onRate, busy }: { tip: Tip; onRate: (r: Reaction, tags: 
   );
 }
 
-export default function Dashboard({ id, focusTip, welcome }: { id: string; focusTip?: string; welcome?: boolean }) {
+export default function Dashboard({ id, focusTip, focusReview, welcome }: { id: string; focusTip?: string; focusReview?: string; welcome?: boolean }) {
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -107,17 +108,27 @@ export default function Dashboard({ id, focusTip, welcome }: { id: string; focus
     } catch {}
   }, [id, apply]);
 
-  async function call(path: string, method: string, body?: unknown, msg?: string) {
+  async function call(path: string, method: string, body?: unknown, msg?: string): Promise<boolean> {
     setBusy(true);
     setError("");
-    const r = await fetch(`/api/creators/${id}${path}`, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
-    const d = await r.json();
-    setBusy(false);
-    if (!r.ok) return setError(d.error ?? "Something went wrong");
-    apply(d);
-    if (msg) {
-      setSaved(msg);
-      setTimeout(() => setSaved(""), 2500);
+    try {
+      const r = await fetch(`/api/creators/${id}${path}`, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      const d = await r.json().catch(() => ({ error: r.status === 413 ? "Images too large" : "Something went wrong" }));
+      if (!r.ok) {
+        setError(d.error ?? "Something went wrong");
+        return false;
+      }
+      apply(d);
+      if (msg) {
+        setSaved(msg);
+        setTimeout(() => setSaved(""), 2500);
+      }
+      return true;
+    } catch {
+      setError("Network error");
+      return false;
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -151,6 +162,8 @@ export default function Dashboard({ id, focusTip, welcome }: { id: string; focus
             </button>
             {saved && <span className="small muted">{saved}</span>}
           </div>
+
+          <PostReviews data={data} focus={focusReview} call={call} busy={busy} />
 
           <div className="card">
             <h2>History</h2>

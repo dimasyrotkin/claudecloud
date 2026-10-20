@@ -10,5 +10,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!["up", "down", "did"].includes(body.reaction)) return NextResponse.json({ error: "Bad reaction" }, { status: 400 });
   const r = await applyFeedback(c, String(body.tipId ?? ""), body.reaction, body.tags, body.note);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
-  return NextResponse.json(dashboardPayload(c));
+  return NextResponse.json(await dashboardPayload(c));
 }

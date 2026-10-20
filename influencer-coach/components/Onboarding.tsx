@@ -7,8 +7,8 @@ import type { Channel, CreatorPlatform, Experience } from "@/lib/types.ts";
 
 const STAGES: { id: Experience; label: string }[] = [
   { id: "starting", label: "Just starting (<1k)" },
-  { id: "growing", label: "Growing (1k-100k)" },
-  { id: "established", label: "Established (100k+)" },
+  { id: "growing", label: "Micro (1k-10k)" },
+  { id: "established", label: "Upper micro (10k-100k)" },
 ];
 
 export default function Onboarding() {

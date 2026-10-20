@@ -7,6 +7,8 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { LIBRARY, STYLES, platformLabel, topicLabel, TOPICS } from "./catalog.ts";
 import { describeDials, type Pick } from "./learner.ts";
+import { AUDIENCE, PSYCHOLOGY, rulesBlock } from "./prompting.ts";
+import { getCorrections } from "./store.ts";
 import type { Creator } from "./types.ts";
 
 const MODEL = process.env.COACH_MODEL ?? "claude-opus-5-5";
@@ -27,7 +29,10 @@ Rules:
 - Never repeat a tip they already received. Build on what they liked; avoid what they disliked.
 - Respect their notes and replies; they override your defaults.
 - Do not invent statistics. If you cite a number, frame it as a rule of thumb.
-- Where it is genuinely relevant, account for risks creators face unevenly (harassment, safety, pay gaps), without lecturing.`;
+- Where it is genuinely relevant, account for risks creators face unevenly (harassment, safety, pay gaps), without lecturing.
+- If their notes mention a recent post review, build on its weakest areas and next experiment.
+${AUDIENCE}
+${PSYCHOLOGY}`;
 
 function buildPrompt(c: Creator, pick: Pick): string {
   const style = STYLES.find((s) => s.id === pick.style)!;
@@ -70,7 +75,7 @@ export async function writeTip(c: Creator, pick: Pick): Promise<TipDraft> {
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       output_config: { effort: "low", format: betaZodOutputFormat(TipSchema) },
-      system: SYSTEM,
+      system: SYSTEM + rulesBlock(await getCorrections()),
       messages: [{ role: "user", content: buildPrompt(c, pick) }],
     });
     if (res.stop_reason === "refusal" || !res.parsed_output) return libraryTip(c, pick);

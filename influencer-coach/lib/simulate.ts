@@ -49,10 +49,10 @@ export const PERSONAS: Persona[] = [
   {
     id: "lena",
     name: "Lena, LinkedIn career coach, 2k followers",
-    summary: "Just starting. Inconsistent posting is her real problem. Prefers gentle tone.",
+    summary: "Just starting. Inconsistent posting and impostor feelings are her real problems. Prefers gentle tone.",
     goals: ["niche", "hooks"],
     experience: "starting",
-    topicTaste: { ...base(0.3), consistency: 0.9, niche: 0.75, community: 0.7, hooks: 0.55, wellbeing: 0.6 },
+    topicTaste: { ...base(0.3), consistency: 0.9, psychology: 0.8, niche: 0.75, community: 0.7, hooks: 0.55, wellbeing: 0.6 },
     styleTaste: { ...styles(0.8), quick_win: 1.1, reframe: 1.0, challenge: 0.6 },
     dials: { length: -0.2, specificity: 0.3, tone: -0.7, level: -0.6 },
     responseRate: 0.8,

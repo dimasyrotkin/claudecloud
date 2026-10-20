@@ -13,5 +13,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Daily limit reached, come back tomorrow" }, { status: 429 });
   }
   await sendTip(c);
-  return NextResponse.json(dashboardPayload(c));
+  return NextResponse.json(await dashboardPayload(c));
 }

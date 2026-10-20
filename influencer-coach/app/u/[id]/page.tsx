@@ -5,9 +5,9 @@ export default async function CreatorPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tip?: string; welcome?: string }>;
+  searchParams: Promise<{ tip?: string; review?: string; welcome?: string }>;
 }) {
   const { id } = await params;
-  const { tip, welcome } = await searchParams;
-  return <Dashboard id={id} focusTip={tip} welcome={welcome === "1"} />;
+  const { tip, review, welcome } = await searchParams;
+  return <Dashboard id={id} focusTip={tip} focusReview={review} welcome={welcome === "1"} />;
 }

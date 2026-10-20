@@ -75,7 +75,17 @@ async function twilio(to: string, from: string, body: string) {
   });
 }
 
-export async function deliver(c: Creator, tip: Tip): Promise<Tip["delivery"]> {
+/** One message, rendered per channel. */
+interface Outgoing {
+  subject: string;
+  text: string;          // WhatsApp, Discord, Slack
+  sms: string;
+  html: string;          // email body
+  telegramHtml: string;
+  buttons?: { text: string; callback_data: string }[];
+}
+
+async function send(c: Creator, m: Outgoing): Promise<Tip["delivery"]> {
   const ch = c.channel;
   if (ch === "web") return { channel: ch, ok: true, simulated: false, detail: "Web inbox" };
   if (!channelConfigured(ch)) {
@@ -93,13 +103,8 @@ export async function deliver(c: Creator, tip: Tip): Promise<Tip["delivery"]> {
           body: JSON.stringify({
             from: process.env.EMAIL_FROM ?? "Cadence Coach <onboarding@resend.dev>",
             to: c.contact,
-            subject: `Today's tip: ${tip.title}`,
-            html: `<div style="font-family:system-ui;max-width:560px;line-height:1.5">
-              <p style="color:#888;font-size:13px">${esc(topicLabel(tip.topic))}</p>
-              <h2>${esc(tip.title)}</h2><p>${esc(tip.body)}</p>
-              <p><b>Today:</b> ${esc(tip.action)}</p><p style="color:#666">${esc(tip.why)}</p>
-              <p><a href="${feedbackUrl(c, tip)}">Rate this tip</a> so tomorrow's is better.</p>
-              ${isCheckinDay(c) ? `<p>🗓 <a href="${appUrl()}/u/${c.id}#checkin">Weekly check-in</a>: tell me what you want more of next week.</p>` : ""}</div>`,
+            subject: m.subject,
+            html: `<div style="font-family:system-ui;max-width:560px;line-height:1.5">${m.html}</div>`,
           }),
         });
         break;
@@ -109,35 +114,74 @@ export async function deliver(c: Creator, tip: Tip): Promise<Tip["delivery"]> {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: c.contact,
-            text: `☀️ <b>${esc(tip.title)}</b>\n\n${esc(tip.body)}\n\n👉 <b>Today:</b> ${esc(tip.action)}\n\n<i>${esc(tip.why)}</i>\n\nReply with any message to tell me what you want more or less of.${esc(checkinLine(c))}`,
+            text: m.telegramHtml,
             parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: [[
-                { text: "👍 Useful", callback_data: `fb|${tip.id}|up` },
-                { text: "✅ I did it", callback_data: `fb|${tip.id}|did` },
-                { text: "👎 Not for me", callback_data: `fb|${tip.id}|down` },
-              ]],
-            },
+            ...(m.buttons ? { reply_markup: { inline_keyboard: [m.buttons] } } : {}),
           }),
         });
         break;
       case "whatsapp":
-        r = await twilio(`whatsapp:${c.contact}`, `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`, plainText(c, tip));
+        r = await twilio(`whatsapp:${c.contact}`, `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`, m.text);
         break;
       case "sms":
-        r = await twilio(c.contact, process.env.TWILIO_SMS_FROM!, `${tip.title}: ${tip.action} Rate: ${feedbackUrl(c, tip)}`);
+        r = await twilio(c.contact, process.env.TWILIO_SMS_FROM!, m.sms);
         break;
       case "discord":
         if (!validWebhook("discord", c.contact)) return { channel: ch, ok: false, simulated: false, detail: "Invalid Discord webhook URL" };
-        r = await post(c.contact, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: plainText(c, tip) }) });
+        r = await post(c.contact, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: m.text }) });
         break;
       case "slack":
         if (!validWebhook("slack", c.contact)) return { channel: ch, ok: false, simulated: false, detail: "Invalid Slack webhook URL" };
-        r = await post(c.contact, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: plainText(c, tip) }) });
+        r = await post(c.contact, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: m.text }) });
         break;
     }
     return { channel: ch, ok: r.ok, simulated: false, detail: r.detail };
   } catch (err) {
     return { channel: ch, ok: false, simulated: false, detail: String(err).slice(0, 200) };
   }
+}
+
+export function deliver(c: Creator, tip: Tip): Promise<Tip["delivery"]> {
+  return send(c, {
+    subject: `Today's tip: ${tip.title}`,
+    text: plainText(c, tip),
+    sms: `${tip.title}: ${tip.action} Rate: ${feedbackUrl(c, tip)}`,
+    html: `<p style="color:#888;font-size:13px">${esc(topicLabel(tip.topic))}</p>
+      <h2>${esc(tip.title)}</h2><p>${esc(tip.body)}</p>
+      <p><b>Today:</b> ${esc(tip.action)}</p><p style="color:#666">${esc(tip.why)}</p>
+      <p><a href="${feedbackUrl(c, tip)}">Rate this tip</a> so tomorrow's is better.</p>
+      ${isCheckinDay(c) ? `<p>🗓 <a href="${appUrl()}/u/${c.id}#checkin">Weekly check-in</a>: tell me what you want more of next week.</p>` : ""}`,
+    telegramHtml: `☀️ <b>${esc(tip.title)}</b>\n\n${esc(tip.body)}\n\n👉 <b>Today:</b> ${esc(tip.action)}\n\n<i>${esc(tip.why)}</i>\n\nReply with any message to tell me what you want more or less of.${esc(checkinLine(c))}`,
+    buttons: [
+      { text: "👍 Useful", callback_data: `fb|${tip.id}|up` },
+      { text: "✅ I did it", callback_data: `fb|${tip.id}|did` },
+      { text: "👎 Not for me", callback_data: `fb|${tip.id}|down` },
+    ],
+  });
+}
+
+export function notifyReviewReady(c: Creator, reviewId: string, summary: string): Promise<Tip["delivery"]> {
+  const url = `${appUrl()}/u/${c.id}?review=${reviewId}#reviews`;
+  return send(c, {
+    subject: "Your post review is ready",
+    text: `📝 Your post review is ready.\n\n${summary}\n\nSee the scores, fixes and a rewritten hook: ${url}`,
+    sms: `Your Cadence post review is ready: ${url}`,
+    html: `<h2>Your post review is ready</h2><p>${esc(summary)}</p><p><a href="${url}">See scores, fixes and a rewritten hook</a></p>`,
+    telegramHtml: `📝 <b>Your post review is ready</b>\n\n${esc(summary)}\n\n<a href="${esc(url)}">See scores, fixes and a rewritten hook</a>`,
+  });
+}
+
+/** Optional heads-up to the human reviewer when something lands in the queue. */
+export async function notifyAdmin(subject: string, text: string): Promise<void> {
+  if (!process.env.ADMIN_EMAIL || !process.env.RESEND_API_KEY) return;
+  await post("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM ?? "Cadence Coach <onboarding@resend.dev>",
+      to: process.env.ADMIN_EMAIL,
+      subject,
+      html: `<p>${esc(text)}</p><p><a href="${appUrl()}/admin">Open review queue</a></p>`,
+    }),
+  }).catch(() => undefined);
 }
