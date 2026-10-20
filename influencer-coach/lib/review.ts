@@ -24,8 +24,8 @@ export const DIMENSIONS: { id: ReviewDimension; label: string; topic: string }[]
   { id: "positioning", label: "Niche & positioning", topic: "niche" },
 ];
 
-/** Human reviewers approve before creators see anything, unless no admin is configured. */
-export const manualReview = () => !!process.env.ADMIN_KEY && process.env.REVIEW_MODE !== "auto";
+/** Default: reviews publish immediately and the admin spot-checks. REVIEW_MODE=manual holds them for approval. */
+export const manualReview = () => !!process.env.ADMIN_KEY && process.env.REVIEW_MODE === "manual";
 
 const Dim = z.enum(["hook", "storytelling", "visuals", "pacing", "engagement", "positioning"]);
 const ReviewSchema = z.object({

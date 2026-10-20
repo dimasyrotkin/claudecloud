@@ -8,8 +8,7 @@ export default function Home() {
         <h1>A content coach for micro-creators.<br />Tuned to you, a little more every day.</h1>
         <p className="lede">
           No agency, no team, no budget? Cadence sends one practical tip each morning on the channel you already live in,
-          reviews the posts you share with it, and learns from your reactions what actually moves you. A human double-checks
-          every post review.
+          reviews the posts you share with it, and learns from your reactions what actually moves you.
         </p>
         <div className="row">
           <a className="btn" href="#start">Start free</a>
@@ -28,7 +27,7 @@ export default function Home() {
         </div>
         <div className="card">
           <h3>3. Get posts reviewed</h3>
-          <p className="muted small">Paste a caption or script, add screenshots and numbers. You get scores, fixes and a rewritten hook, checked by a human coach first.</p>
+          <p className="muted small">Paste a caption or script, add screenshots and numbers. You get scores, fixes and a rewritten hook.</p>
         </div>
         <div className="card">
           <h3>4. It adapts</h3>

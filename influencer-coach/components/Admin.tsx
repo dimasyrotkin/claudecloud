@@ -114,6 +114,18 @@ function Editor({ review, creator, onDone, api }: {
   );
 }
 
+function FlagReview({ review, api }: { review: PostReview; api: (path: string, method: string, body?: unknown) => Promise<boolean> }) {
+  const [rule, setRule] = useState("");
+  const [saved, setSaved] = useState(false);
+  if (saved) return <p className="small tag good">Rule saved</p>;
+  return (
+    <div className="row" style={{ marginTop: 10 }}>
+      <input value={rule} onChange={(e) => setRule(e.target.value)} placeholder="Mistake here? Write the rule that prevents it" style={{ flex: 1, minWidth: 200 }} />
+      <button className="btn sm" disabled={!rule.trim()} onClick={async () => (await api("/corrections", "POST", { rule, from: { kind: "review", id: review.id, creatorId: review.creatorId } })) && setSaved(true)}>Save rule</button>
+    </div>
+  );
+}
+
 function FlagTip({ tip, api, onDone }: { tip: AdminData["tips"][number]; api: (path: string, method: string, body?: unknown) => Promise<boolean>; onDone: () => void }) {
   const [rule, setRule] = useState("");
   const [open, setOpen] = useState(false);
@@ -131,7 +143,7 @@ export default function Admin() {
   const [key, setKey] = useState("");
   const [input, setInput] = useState("");
   const [data, setData] = useState<AdminData | null>(null);
-  const [tab, setTab] = useState<"queue" | "done" | "tips" | "rules">("queue");
+  const [tab, setTab] = useState<"queue" | "done" | "tips" | "rules">("done");
   const [error, setError] = useState("");
   const [newRule, setNewRule] = useState("");
 
@@ -179,7 +191,7 @@ export default function Admin() {
   }
 
   const tabs = [
-    ["queue", `Review queue (${data.pending.length})`],
+    ...(data.config.manualReview || data.pending.length ? ([["queue", `Review queue (${data.pending.length})`]] as const) : []),
     ["done", "Reviewed"],
     ["tips", "Tips sent"],
     ["rules", `Rules (${data.corrections.length})`],
@@ -187,7 +199,7 @@ export default function Admin() {
 
   return (
     <>
-      {!data.config.manualReview && <div className="banner">REVIEW_MODE=auto: reviews go straight to creators. Remove it to require approval.</div>}
+      {!data.config.manualReview && <div className="banner">Reviews publish immediately. Spot-check them under &quot;Reviewed&quot; and turn mistakes into rules. Set REVIEW_MODE=manual to hold them for approval.</div>}
       {data.config.storageMode === "memory" && <div className="banner">Demo storage: the queue resets when the server restarts.</div>}
       <div className="chips" style={{ marginBottom: 16 }}>
         {tabs.map(([id, label]) => (
@@ -219,6 +231,7 @@ export default function Admin() {
                 </span>
               </summary>
               {r.final ? <ReviewBody content={r.final} dimensions={DIMS} /> : <p className="small">Rejected: {r.rejectReason || "no reason"}</p>}
+              {r.final && <FlagReview review={r} api={api} />}
             </details>
           ))}
         </div>

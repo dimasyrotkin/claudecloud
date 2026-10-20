@@ -11,7 +11,7 @@ Content coaching for micro-creators (under ~100k followers): one tip a day on th
 | `/` | Landing + 30-second onboarding (platform, niche, stage, goals, struggle, delivery channel, time). First tip is sent right away. |
 | `/u/<id>` | Private dashboard: today's tip, one-tap feedback + tags, weekly check-in, "what your coach has learned" (posteriors with uncertainty), history, notes, delivery settings. |
 | `/u/<id>#reviews` | Post feedback: creator pastes caption/script, adds up to 3 screenshots and metrics. Claude scores 6 areas, lists fixes, rewrites the hook and suggests an experiment. |
-| `/admin` | Coach console (needs `ADMIN_KEY`): approve, edit or reject each post review before the creator sees it, spot-check sent tips, and turn mistakes into rules. |
+| `/admin` | Coach console (needs `ADMIN_KEY`): spot-check published reviews and tips, and turn mistakes into rules that every future prompt follows. Optional approval queue. |
 | `/lab` | Simulation with synthetic creators. It runs the production learner in the browser and compares it against random tips and a perfect-knowledge ceiling. |
 
 Delivery channels: web inbox (always), Email (Resend), Telegram (inline 👍/✅/👎 buttons, free-text replies become coach memory), WhatsApp and SMS (Twilio), Discord and Slack (webhooks). If a channel isn't configured on the server, the tip still lands in the web inbox and is marked "simulated".
@@ -39,13 +39,14 @@ onboarding goals + population prior
 ### Human-in-the-loop
 
 ```
-creator submits post ─▶ Claude draft ─▶ admin queue ─▶ approve / edit / reject ─▶ creator notified
-                                             │
-                                             └─▶ "caught a mistake" rule ─▶ added to every future tip + review prompt
+creator submits post ─▶ Claude review ─▶ published to creator ─▶ admin spot-checks in /admin
+                                                                        │
+                                       "caught a mistake" rule ◀────────┘
+                                       added to every future tip + review prompt
 approved scores ─▶ weakest 2 areas nudge the topic learner (real posts beat stated goals)
 ```
 
-Daily tips go out without approval (one per creator per day would not scale), but admins can flag them, which also creates a rule.
+Rules over approvals: one good rule fixes every future output, approving one review fixes one. `REVIEW_MODE=manual` holds reviews in an approval queue if you ever need it. Every review keeps the original AI draft next to any edits, as a dataset for later.
 
 Code: `lib/learner.ts` (model), `lib/coach.ts` (Claude prompt), `lib/simulate.ts` (personas). `npm test` checks that the learner beats the non-learning baseline across 20 seeds.
 
@@ -59,9 +60,9 @@ Code: `lib/learner.ts` (model), `lib/coach.ts` (Claude prompt), `lib/simulate.ts
 |---|---|
 | `ANTHROPIC_API_KEY` | AI-written tips (falls back to built-in library without it) |
 | `COACH_MODEL` | optional, default `claude-opus-5-5` (`claude-haiku-5-5` is far cheaper at scale) |
-| `ADMIN_KEY` | enables `/admin`; post reviews then wait for approval |
+| `ADMIN_KEY` | enables `/admin` |
 | `ADMIN_EMAIL` | optional: email when a review lands in the queue (needs Resend) |
-| `REVIEW_MODE=auto` | optional: skip approval and publish AI reviews directly |
+| `REVIEW_MODE=manual` | optional: hold post reviews for approval before creators see them |
 | `REVIEW_MODEL` | optional, defaults to `COACH_MODEL` |
 | `CRON_SECRET` | protects `/api/cron/daily` (Vercel Cron sends it automatically) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Email |

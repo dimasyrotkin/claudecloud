@@ -7,7 +7,8 @@ export async function POST(req: Request) {
   if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   if (typeof body.rule !== "string" || !body.rule.trim()) return NextResponse.json({ error: "Rule is empty" }, { status: 400 });
-  await addCorrection(body.rule, { kind: "tip", id: "manual", creatorId: "" });
+  const from = body.from?.kind === "review" ? { kind: "review" as const, id: String(body.from.id ?? ""), creatorId: String(body.from.creatorId ?? "") } : { kind: "tip" as const, id: "manual", creatorId: "" };
+  await addCorrection(body.rule, from);
   return NextResponse.json({ corrections: await getCorrections() });
 }
 
