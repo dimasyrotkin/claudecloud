@@ -92,7 +92,7 @@ export default function PostReviews({
   }
 
   async function submit() {
-    const ok = await call("/reviews", "POST", { url, caption, goal, metrics, images }, "Sent for review");
+    const ok = await call("/reviews", "POST", { url, caption, goal, metrics, images }, data.manualReview ? "Sent for review" : "Review ready");
     if (ok) {
       setCaption("");
       setUrl("");

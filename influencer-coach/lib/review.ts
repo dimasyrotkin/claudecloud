@@ -9,6 +9,7 @@ import { z } from "zod";
 import { platformLabel } from "./catalog.ts";
 import { notifyAdmin, notifyReviewReady } from "./channels.ts";
 import { prefer } from "./learner.ts";
+import { aiHooks } from "./ai-hooks.ts";
 import { AUDIENCE, PSYCHOLOGY, rulesBlock } from "./prompting.ts";
 import { getCorrections, saveCreator, saveReview } from "./store.ts";
 import type { Creator, PostInput, PostReview, ReviewContent, ReviewDimension } from "./types.ts";
@@ -84,7 +85,29 @@ ${p.caption || "(none provided)"}
 """`;
 }
 
+async function reviewSystem(): Promise<string> {
+  return `You review social media posts for creators and give honest, specific, kind feedback.
+${AUDIENCE}
+${PSYCHOLOGY}
+Rules:
+- Judge for their platform and goal. Quote their actual words when pointing at a problem.
+- Only judge what you can see. If there is no video, say so in caveats and do not invent details about it.
+- Metrics: interpret relative to typical micro-creator ranges as rules of thumb, never as precise benchmarks. Saves and shares per view matter more than likes.
+- Be encouraging about effort and direct about fixes. Never comment on the creator's body or appearance unless they asked.${rulesBlock(await getCorrections())}`;
+}
+
+const REVIEW_JSON = `Reply with JSON only, this shape:
+{"summary": string (2-3 sentences), "scores": {"hook": 1-10, "storytelling": 1-10, "visuals": 1-10 (5 if no image), "pacing": 1-10 (5 if not judgeable), "engagement": 1-10, "positioning": 1-10},
+ "strengths": [2-3 strings], "fixes": [2-4 of {"dimension": one of hook|storytelling|visuals|pacing|engagement|positioning, "issue": string, "fix": string}],
+ "rewrittenHook": string, "nextExperiment": string, "confidence": "low"|"medium"|"high", "caveats": string}`;
+
+async function hookReview(c: Creator, p: PostInput): Promise<ReviewContent | null> {
+  const out = ReviewSchema.safeParse(await aiHooks.json!(await reviewSystem(), `${describeInput(c, p)}\n\n${REVIEW_JSON}`, p.images));
+  return out.success ? out.data : null;
+}
+
 async function claudeReview(c: Creator, p: PostInput): Promise<ReviewContent | null> {
+  if (aiHooks.json) return hookReview(c, p);
   const client = new Anthropic();
   const images: Anthropic.Beta.BetaImageBlockParam[] = p.images.map((d) => ({
     type: "image",
@@ -96,14 +119,7 @@ async function claudeReview(c: Creator, p: PostInput): Promise<ReviewContent | n
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     output_config: { effort: "medium", format: betaZodOutputFormat(ReviewSchema) },
-    system: `You review social media posts for creators and give honest, specific, kind feedback. A human coach checks your review before the creator sees it.
-${AUDIENCE}
-${PSYCHOLOGY}
-Rules:
-- Judge for their platform and goal. Quote their actual words when pointing at a problem.
-- Only judge what you can see. If there is no video, say so in caveats and do not invent details about it.
-- Metrics: interpret relative to typical micro-creator ranges as rules of thumb, never as precise benchmarks. Saves and shares per view matter more than likes.
-- Be encouraging about effort and direct about fixes. Never comment on the creator's body or appearance unless they asked.${rulesBlock(await getCorrections())}`,
+    system: await reviewSystem(),
     messages: [{ role: "user", content: [...images, { type: "text", text: describeInput(c, p) }] }],
   });
   if (res.stop_reason === "refusal" || !res.parsed_output) return null;
@@ -149,7 +165,7 @@ const newId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 10);
 export async function createReview(c: Creator, input: PostInput): Promise<PostReview> {
   let ai: ReviewContent | null = null;
   let source: PostReview["source"] = "heuristic";
-  if (process.env.ANTHROPIC_API_KEY) {
+  if (process.env.ANTHROPIC_API_KEY || aiHooks.json) {
     try {
       ai = await claudeReview(c, input);
       if (ai) source = "claude";

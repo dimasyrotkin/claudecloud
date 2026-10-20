@@ -9,6 +9,7 @@ import { LIBRARY, STYLES, platformLabel, topicLabel, TOPICS } from "./catalog.ts
 import { describeDials, type Pick } from "./learner.ts";
 import { AUDIENCE, PSYCHOLOGY, rulesBlock } from "./prompting.ts";
 import { getCorrections } from "./store.ts";
+import { aiHooks } from "./ai-hooks.ts";
 import type { Creator } from "./types.ts";
 
 const MODEL = process.env.COACH_MODEL ?? "claude-opus-5-5";
@@ -66,6 +67,20 @@ ${describeDials(c.learner.dials).map((d) => `  - ${d}`).join("\n")}`;
 }
 
 export async function writeTip(c: Creator, pick: Pick): Promise<TipDraft> {
+  if (aiHooks.json) {
+    try {
+      const out = TipSchema.safeParse(
+        await aiHooks.json(
+          SYSTEM + rulesBlock(await getCorrections()),
+          `${buildPrompt(c, pick)}\n\nReply with JSON only: {"title": string (max 8 words), "body": string, "action": string (max 25 words), "why": string (one sentence)}`,
+        ),
+      );
+      if (out.success) return { ...out.data, source: "claude" };
+    } catch (err) {
+      console.error("Tip generation failed", err);
+    }
+    return libraryTip(c, pick);
+  }
   if (!process.env.ANTHROPIC_API_KEY) return libraryTip(c, pick);
   try {
     const client = new Anthropic();

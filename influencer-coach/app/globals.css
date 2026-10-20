@@ -37,6 +37,24 @@
   }
 }
 
+:root[data-theme="dark"] {
+  --bg: #15130f;
+  --surface: #1e1b17;
+  --surface-2: #27231e;
+  --text: #f3eee6;
+  --muted: #a9a094;
+  --line: #36312a;
+  --accent: #f06a53;
+  --accent-ink: #15130f;
+  --accent-soft: #3a221c;
+  --good: #5cc28a;
+  --bad: #f08070;
+  --series-1: #f06a53;
+  --series-2: #8a8277;
+  --series-3: #5cc28a;
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
@@ -47,7 +65,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 a { color: var(--accent); }
-.wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+.wrap {
+  max-width: 980px; margin: 0 auto; padding-block: 24px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
 .brand { font-weight: 800; letter-spacing: -0.02em; font-size: 20px; color: var(--text); text-decoration: none; }
 .brand span { color: var(--accent); }
